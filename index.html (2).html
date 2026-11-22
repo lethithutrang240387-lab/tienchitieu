@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sổ Chi Tiêu Không Giới Hạn</title>
+  <style>
+    :root {
+      --bg: #0c0f14;
+      --surface: #141821;
+      --surface-2: #1b2130;
+      --surface-3: #111622;
+      --border: #2a3347;
+      --border-soft: rgba(148, 163, 184, 0.16);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --ok: #22c55e;
+      --ok-bg: rgba(34, 197, 94, 0.12);
+      --ok-border: rgba(34, 197, 94, 0.28);
+      --warn: #ef4444;
+      --warn-bg: rgba(239, 68, 68, 0.12);
+      --warn-border: rgba(239, 68, 68, 0.28);
+      --gold: #f59e0b;
+      --gold-bg: rgba(245, 158, 11, 0.12);
+      --gold-border: rgba(245, 158, 11, 0.28);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.45;
+    }
+    .app { max-width: 1020px; margin: 0 auto; }
+    .top-bar {
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+      align-items: flex-start; margin-bottom: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px;
+    }
+    h1 { margin: 0; font-size: 19px; font-weight: 700; }
+    .sub-row {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-top: 6px; font-size: 12.5px; color: var(--muted);
+    }
+    .save-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(34, 197, 94, 0.12); color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    button, label.btn {
+      background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+      padding: 8px 12px; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 6px; transition: 0.15s;
+    }
+    button:hover, label.btn:hover { border-color: var(--accent); background: #222a3d; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    button.primary:hover { background: var(--accent-hover); }
+    button.danger:hover { border-color: var(--warn); color: #fca5a5; }
+    button.sm-btn {
+      padding: 5px 9px;
+      font-size: 12px;
+      border-radius: 7px;
+    }
+    input[type="file"] { display: none; }
+
+    .config-bar {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px; margin-bottom: 12px;
+    }
+    .config-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px;
+    }
+    .config-card label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .config-card input {
+      width: 100%; padding: 8px 10px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      font-size: 14px; font-weight: 600;
+    }
+
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px; margin-bottom: 16px;
+    }
+    .stat {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px;
+    }
+    .stat .label { font-size: 12px; color: var(--muted); }
+    .stat .val { font-size: 17px; font-weight: 700; margin-top: 6px; }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .gold { color: var(--gold); }
+
+    .week-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 12px; margin-bottom: 14px;
+    }
+    .week-header {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+    }
+    .week-title { font-weight: 700; font-size: 15px; }
+    .week-range { color: var(--muted); font-size: 12px; margin-left: 6px; }
+    .week-summary { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12.5px; }
+
+    .day-card {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 8px; overflow: hidden;
+    }
+    .day-card:last-child { margin-bottom: 0; }
+    .day-head {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px; padding: 11px 12px; cursor: pointer; user-select: none;
+    }
+    .day-head:hover { background: #222a3c; }
+    .day-left { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; }
+    .day-note-preview { color: var(--muted); font-size: 12px; }
+    .day-right { font-size: 12.5px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .day-body {
+      display: none; padding: 12px; border-top: 1px solid var(--border);
+      background: #10141c;
+    }
+    .day-card.open .day-body { display: block; }
+
+    .day-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .group-box {
+      background: var(--surface-3);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .group-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(148, 163, 184, 0.16);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .group-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .group-tag.income {
+      background: var(--ok-bg);
+      color: #86efac;
+      border: 1px solid var(--ok-border);
+    }
+    .group-tag.food {
+      background: var(--gold-bg);
+      color: #fcd34d;
+      border: 1px solid var(--gold-border);
+    }
+    .group-tag.lifestyle {
+      background: rgba(59, 130, 246, 0.14);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .group-subtotal {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .field {
+      background: rgba(12, 15, 20, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    .field input {
+      width: 100%; padding: 7px 9px; border-radius: 7px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px;
+      font-weight: 600;
+    }
+    .field input:focus, .note-field input:focus, .config-card input:focus, .custom-item-row input:focus, .custom-item-row select:focus {
+      outline: none; border-color: var(--accent);
+    }
+
+    .custom-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .custom-item-row {
+      display: grid;
+      grid-template-columns: 115px 1fr 135px auto;
+      gap: 8px;
+      align-items: center;
+      background: rgba(12, 15, 20, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    @media (max-width: 640px) {
+      .custom-item-row {
+        grid-template-columns: 1fr 1fr;
+      }
+      .custom-item-row .custom-name {
+        grid-column: 1 / -1;
+      }
+    }
+    .custom-item-row select,
+    .custom-item-row input {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .empty-custom {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .note-field { margin-top: 10px; }
+    .note-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+    .note-field input {
+      width: 100%; padding: 8px 10px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px;
+    }
+
+    .week-recap {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+    }
+    .week-recap-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .week-recap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 8px;
+    }
+    .recap-box {
+      background: rgba(12, 15, 20, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 8px;
+      padding: 9px 10px;
+    }
+    .recap-box .r-label {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .recap-box .r-val {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .recap-box .r-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .hint {
+      font-size: 12px; color: var(--muted); margin-top: 12px;
+      background: var(--surface); border: 1px dashed var(--border);
+      border-radius: 10px; padding: 10px 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top-bar">
+      <div>
+        <h1>Sổ Chi Tiêu Không Giới Hạn</h1>
+        <div class="sub-row">
+          <span id="periodLabel">Giai đoạn: 23/11/2026 – 06/12/2026</span>
+          <span class="save-badge" id="saveStatus">Đã tự động lưu vào trình duyệt</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="addWeekBtn">+ Thêm 1 tuần</button>
+        <label class="btn" for="importJsonInput">Import JSON</label>
+        <input type="file" id="importJsonInput" accept=".json,application/json" />
+        <button class="primary" id="exportJsonBtn">Export JSON (Sao lưu)</button>
+        <button class="danger" id="resetBtn">Reset gốc</button>
+      </div>
+    </div>
+
+    <div class="config-bar">
+      <div class="config-card">
+        <label for="initialBalanceInput">Số tiền ban đầu (đ)</label>
+        <input type="number" id="initialBalanceInput" min="0" step="1000" />
+      </div>
+      <div class="config-card">
+        <label for="weeklyLimitInput">Hạn mức mỗi tuần (đ)</label>
+        <input type="number" id="weeklyLimitInput" min="0" step="1000" />
+      </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+    <div id="weeksList"></div>
+
+    <div class="hint">
+      <strong>Mẹo giữ dữ liệu không mất toàn bộ:</strong> Mọi thay đổi đều tự lưu vào bộ nhớ trình duyệt (<code>localStorage</code>) của thiết bị hiện tại. Bấm <strong>+ Thêm 1 tuần</strong> bất cứ lúc nào khi muốn nối thêm 7 ngày tiếp theo, tạo thêm khoản tùy ý trong từng ngày bằng nút <strong>+ Thêm khoản khác</strong>, và bấm <strong>Export JSON</strong> định kỳ để tải file dự phòng về máy/Drive.
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "so_chi_tieu_23_11_2026_v1";
+
+    const DEFAULT_DATA = {
+      app: "so_chi_tieu_23_11_2026",
+      exportedAt: "2026-11-22T05:07:51.000Z",
+      state: {
+        visibleDays: 14,
+        initialBalance: 20000,
+        weeklyLimit: 300000,
+        days: {
+          "2026-11-23": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-11-24": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-11-25": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-11-26": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-11-27": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-11-28": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-11-29": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-11-30": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-12-01": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-12-02": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-12-03": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-12-04": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-12-05": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" },
+          "2026-12-06": { parentIncome: 0, breakfast: 0, afternoon: 0, drinks: 0, football: 0, customItems: [], note: "" }
+        },
+        dayExpandedMap: {},
+        weekCollapsedMap: {}
+      }
+    };
+
+    const FIELD_GROUPS = [
+      {
+        title: "Khoản thu trong ngày",
+        tagClass: "income",
+        tagText: "Thu vào (+)",
+        keys: ["parentIncome"]
+      },
+      {
+        title: "Ăn uống & giải khát",
+        tagClass: "food",
+        tagText: "Ăn uống (-)",
+        keys: ["breakfast", "afternoon", "drinks"]
+      },
+      {
+        title: "Thể thao",
+        tagClass: "lifestyle",
+        tagText: "Sinh hoạt (-)",
+        keys: ["football"]
+      }
+    ];
+
+    const FIELD_LABELS = {
+      parentIncome: "Tiền bố mẹ cho",
+      breakfast: "Ăn sáng",
+      afternoon: "Ăn trưa / chiều",
+      drinks: "Đồ uống",
+      football: "Đá bóng"
+    };
+
+    const EXPENSE_FIELDS = ["breakfast", "afternoon", "drinks", "football"];
+    const WEEKDAY_NAMES = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+
+    function createEmptyDay() {
+      return {
+        parentIncome: 0,
+        breakfast: 0,
+        afternoon: 0,
+        drinks: 0,
+        football: 0,
+        customItems: [],
+        note: ""
+      };
+    }
+
+    function normalizeCustomItems(rawList) {
+      if (!Array.isArray(rawList)) return [];
+      return rawList.map((it, idx) => ({
+        id: it && it.id ? String(it.id) : `c_${idx}_${Date.now()}`,
+        type: it && it.type === "income" ? "income" : "expense",
+        name: it && it.name != null ? String(it.name) : "",
+        amount: Math.max(0, Number(it && it.amount != null ? it.amount : 0) || 0)
+      }));
+    }
+
+    function nextIsoDate(isoDate) {
+      const [y, m, d] = isoDate.split("-").map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d + 1));
+      const yy = dt.getUTCFullYear();
+      const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(dt.getUTCDate()).padStart(2, "0");
+      return `${yy}-${mm}-${dd}`;
+    }
+
+    function formatShortVN(isoDate) {
+      const [y, m, d] = isoDate.split("-").map(Number);
+      return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
+    }
+
+    function normalizeData(raw) {
+      const base = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      if (!raw || typeof raw !== "object") return base;
+      const srcState = raw.state && typeof raw.state === "object" ? raw.state : raw;
+
+      base.app = raw.app || base.app;
+      base.exportedAt = raw.exportedAt || base.exportedAt;
+      base.state.initialBalance = Number(srcState.initialBalance ?? base.state.initialBalance) || 0;
+      base.state.weeklyLimit = Number(srcState.weeklyLimit ?? base.state.weeklyLimit) || 0;
+      base.state.dayExpandedMap = (srcState.dayExpandedMap && typeof srcState.dayExpandedMap === "object") ? srcState.dayExpandedMap : {};
+      base.state.weekCollapsedMap = (srcState.weekCollapsedMap && typeof srcState.weekCollapsedMap === "object") ? srcState.weekCollapsedMap : {};
+
+      if (srcState.days && typeof srcState.days === "object") {
+        const mergedDays = {};
+        const allKeys = Array.from(new Set([...Object.keys(base.state.days), ...Object.keys(srcState.days)])).sort();
+        allKeys.forEach(dateKey => {
+          const incoming = srcState.days[dateKey];
+          if (incoming && typeof incoming === "object") {
+            const migratedCustom = normalizeCustomItems(incoming.customItems);
+            const oldTravel = Number(incoming.travel || 0);
+            const oldExtra = Number(incoming.extraCost || 0);
+            if (oldTravel > 0) {
+              migratedCustom.push({ id: "old_travel_" + dateKey, type: "expense", name: "Đi lại", amount: oldTravel });
+            }
+            if (oldExtra > 0) {
+              migratedCustom.push({ id: "old_extra_" + dateKey, type: "expense", name: "Chi phí khác", amount: oldExtra });
+            }
+
+            mergedDays[dateKey] = {
+              parentIncome: Number(incoming.parentIncome || 0),
+              breakfast: Number(incoming.breakfast || 0),
+              afternoon: Number(incoming.afternoon || 0),
+              drinks: Number(incoming.drinks || 0),
+              football: Number(incoming.football || 0),
+              customItems: migratedCustom,
+              note: String(incoming.note ?? "")
+            };
+          } else {
+            mergedDays[dateKey] = createEmptyDay();
+          }
+        });
+        base.state.days = mergedDays;
+      }
+      base.state.visibleDays = Object.keys(base.state.days).length;
+      return base;
+    }
+
+    function loadSaved() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return normalizeData(DEFAULT_DATA);
+        return normalizeData(JSON.parse(raw));
+      } catch {
+        return normalizeData(DEFAULT_DATA);
+      }
+    }
+
+    let appData = loadSaved();
+
+    function persist(reasonText) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        const now = new Date().toLocaleTimeString("vi-VN", { hour12: false });
+        document.getElementById("saveStatus").textContent = `${reasonText || "Đã tự động lưu"} lúc ${now}`;
+      } catch (e) {
+        document.getElementById("saveStatus").textContent = "Không lưu được vào trình duyệt";
+      }
+    }
+
+    function fmtMoney(n) {
+      return Number(n || 0).toLocaleString("vi-VN") + "đ";
+    }
+
+    function fmtSignedMoney(n) {
+      const val = Number(n || 0);
+      if (val > 0) return "+" + fmtMoney(val);
+      if (val < 0) return "-" + fmtMoney(Math.abs(val));
+      return fmtMoney(0);
+    }
+
+    function formatDateLabel(isoDate) {
+      const [y, m, d] = isoDate.split("-").map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      const wd = WEEKDAY_NAMES[dt.getUTCDay()];
+      const dd = String(d).padStart(2, "0");
+      const mm = String(m).padStart(2, "0");
+      return `${wd} - ${dd}/${mm}/${y}`;
+    }
+
+    function calcDayIncome(dayObj) {
+      const baseInc = Number(dayObj.parentIncome || 0);
+      const customInc = normalizeCustomItems(dayObj.customItems)
+        .filter(it => it.type === "income")
+        .reduce((s, it) => s + Number(it.amount || 0), 0);
+      return baseInc + customInc;
+    }
+
+    function calcDayExpense(dayObj) {
+      const baseExp = EXPENSE_FIELDS.reduce((sum, key) => sum + Number(dayObj[key] || 0), 0);
+      const customExp = normalizeCustomItems(dayObj.customItems)
+        .filter(it => it.type !== "income")
+        .reduce((s, it) => s + Number(it.amount || 0), 0);
+      return baseExp + customExp;
+    }
+
+    function calcGroupSum(dayObj, keys) {
+      return keys.reduce((sum, key) => sum + Number(dayObj[key] || 0), 0);
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+
+    function addOneWeek() {
+      const days = appData.state.days;
+      const sorted = Object.keys(days).sort();
+      let cursorDate = sorted.length ? sorted[sorted.length - 1] : "2026-12-06";
+
+      for (let i = 0; i < 7; i++) {
+        cursorDate = nextIsoDate(cursorDate);
+        if (!days[cursorDate]) {
+          days[cursorDate] = createEmptyDay();
+        }
+      }
+      appData.state.visibleDays = Object.keys(days).length;
+      persist("Đã thêm 1 tuần mới");
+      render();
+    }
+
+    window.addCustomItem = function(event, dateStr) {
+      if (event) event.stopPropagation();
+      const dayObj = appData.state.days[dateStr];
+      if (!dayObj) return;
+      dayObj.customItems = normalizeCustomItems(dayObj.customItems);
+      dayObj.customItems.push({
+        id: "c_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        type: "expense",
+        name: "",
+        amount: 0
+      });
+      appData.state.dayExpandedMap[dateStr] = true;
+      persist("Đã thêm khoản khác");
+      render();
+    };
+
+    window.removeCustomItem = function(dateStr, itemId) {
+      const dayObj = appData.state.days[dateStr];
+      if (!dayObj) return;
+      dayObj.customItems = normalizeCustomItems(dayObj.customItems).filter(it => it.id !== itemId);
+      persist("Đã xóa khoản khác");
+      render();
+    };
+
+    function render() {
+      const { initialBalance, weeklyLimit, days, dayExpandedMap } = appData.state;
+      document.getElementById("initialBalanceInput").value = initialBalance;
+      document.getElementById("weeklyLimitInput").value = weeklyLimit;
+
+      const sortedDates = Object.keys(days).sort();
+      const firstDateStr = sortedDates.length ? formatShortVN(sortedDates[0]) : "23/11/2026";
+      const lastDateStr = sortedDates.length ? formatShortVN(sortedDates[sortedDates.length - 1]) : "06/12/2026";
+      document.getElementById("periodLabel").textContent = `Giai đoạn: ${firstDateStr} – ${lastDateStr}`;
+      document.title = `Sổ Chi Tiêu Không Giới Hạn (${firstDateStr} - ${lastDateStr})`;
+
+      let totalIncome = 0;
+      let totalExpense = 0;
+      sortedDates.forEach(d => {
+        totalIncome += calcDayIncome(days[d]);
+        totalExpense += calcDayExpense(days[d]);
+      });
+
+      const weekChunks = [];
+      for (let i = 0; i < sortedDates.length; i += 7) {
+        weekChunks.push(sortedDates.slice(i, i + 7));
+      }
+
+      const initBal = Number(initialBalance || 0);
+      const currentBalance = initBal + totalIncome - totalExpense;
+      const totalLimitAllWeeks = Number(weeklyLimit || 0) * Math.max(1, weekChunks.length);
+      const remainingLimit = totalLimitAllWeeks - totalExpense;
+
+      document.getElementById("statsGrid").innerHTML = `
+        <div class="stat">
+          <div class="label">Số dư hiện tại</div>
+          <div class="val ${currentBalance < 0 ? "warn" : "ok"}">${fmtMoney(currentBalance)}</div>
+        </div>
+        <div class="stat">
+          <div class="label">Tổng tiền thu / bố mẹ cho</div>
+          <div class="val ok">+${fmtMoney(totalIncome)}</div>
+        </div>
+        <div class="stat">
+          <div class="label">Tổng đã chi (${sortedDates.length} ngày)</div>
+          <div class="val warn">${fmtMoney(totalExpense)}</div>
+        </div>
+        <div class="stat">
+          <div class="label">Còn lại theo hạn mức (${weekChunks.length} tuần)</div>
+          <div class="val ${remainingLimit < 0 ? "warn" : "gold"}">${fmtMoney(remainingLimit)}</div>
+        </div>
+      `;
+
+      let cumulativeIncome = 0;
+      let cumulativeExpense = 0;
+
+      const weeks = weekChunks.map((dates, idx) => {
+        const startD = dates[0];
+        const endD = dates[dates.length - 1];
+        return {
+          index: idx + 1,
+          title: `TUẦN ${idx + 1}`,
+          range: `${formatShortVN(startD)} – ${formatShortVN(endD)}`,
+          dates
+        };
+      });
+
+      document.getElementById("weeksList").innerHTML = weeks.map(w => {
+        const wIncome = w.dates.reduce((s, d) => s + calcDayIncome(days[d]), 0);
+        const wExpense = w.dates.reduce((s, d) => s + calcDayExpense(days[d]), 0);
+        const wNet = wIncome - wExpense;
+        const wLeft = Number(weeklyLimit || 0) - wExpense;
+
+        cumulativeIncome += wIncome;
+        cumulativeExpense += wExpense;
+        const moneyAtEndOfWeek = initBal + cumulativeIncome - cumulativeExpense;
+
+        const daysHtml = w.dates.map(d => {
+          const item = days[d];
+          const exp = calcDayExpense(item);
+          const inc = calcDayIncome(item);
+          const isOpen = !!dayExpandedMap[d];
+          const customList = normalizeCustomItems(item.customItems);
+
+          const groupsHtml = FIELD_GROUPS.map(grp => {
+            const grpSum = calcGroupSum(item, grp.keys);
+            const prefix = grp.tagClass === "income" ? "+" : "";
+            const fieldsHtml = grp.keys.map(key => `
+              <div class="field">
+                <label for="${d}__${key}"><span>${FIELD_LABELS[key]}</span></label>
+                <input type="number" min="0" step="1000" id="${d}__${key}"
+                  value="${Number(item[key] || 0)}" data-date="${d}" data-key="${key}" class="amt-input" />
+              </div>
+            `).join("");
+
+            return `
+              <div class="group-box">
+                <div class="group-head">
+                  <div>
+                    <span class="group-tag ${grp.tagClass}">${grp.tagText}</span>
+                    <span style="margin-left:6px;color:var(--text);">${grp.title}</span>
+                  </div>
+                  <div class="group-subtotal">Tổng nhóm: <strong>${prefix}${fmtMoney(grpSum)}</strong></div>
+                </div>
+                <div class="inputs-grid">${fieldsHtml}</div>
+              </div>
+            `;
+          }).join("");
+
+          const customRowsHtml = customList.length === 0
+            ? `<div class="empty-custom">Chưa có khoản tự tạo nào trong ngày. Bấm <strong>+ Thêm khoản khác</strong> để tạo thêm.</div>`
+            : customList.map(cIt => `
+                <div class="custom-item-row">
+                  <select data-date="${d}" data-cid="${cIt.id}" class="custom-type">
+                    <option value="expense" ${cIt.type === "expense" ? "selected" : ""}>Chi ra (-)</option>
+                    <option value="income" ${cIt.type === "income" ? "selected" : ""}>Thu vào (+)</option>
+                  </select>
+                  <input type="text" class="custom-name" placeholder="Tên khoản (VD: Mua vở, Cắt tóc...)"
+                    value="${escapeHtml(cIt.name)}" data-date="${d}" data-cid="${cIt.id}" />
+                  <input type="number" min="0" step="1000" class="custom-amt" placeholder="Số tiền (đ)"
+                    value="${Number(cIt.amount || 0)}" data-date="${d}" data-cid="${cIt.id}" />
+                  <button type="button" class="danger sm-btn" onclick="removeCustomItem('${d}', '${cIt.id}')">Xóa</button>
+                </div>
+              `).join("");
+
+          const customGroupHtml = `
+            <div class="group-box">
+              <div class="group-head">
+                <div>
+                  <span class="group-tag lifestyle">Tùy chỉnh</span>
+                  <span style="margin-left:6px;color:var(--text);">Các khoản khác trong ngày</span>
+                </div>
+                <button type="button" class="sm-btn" onclick="addCustomItem(event, '${d}')">+ Thêm khoản khác</button>
+              </div>
+              <div class="custom-items-list">${customRowsHtml}</div>
+            </div>
+          `;
+
+          return `
+            <div class="day-card ${isOpen ? "open" : ""}">
+              <div class="day-head" onclick="toggleDayCard('${d}')">
+                <div class="day-left">
+                  <strong>${formatDateLabel(d)}</strong>
+                  ${item.note ? `<span class="day-note-preview">• ${escapeHtml(item.note)}</span>` : ""}
+                </div>
+                <div class="day-right">
+                  ${inc > 0 ? `<span class="ok">+${fmtMoney(inc)}</span>` : ""}
+                  <span>Tổng chi: <strong>${fmtMoney(exp)}</strong></span>
+                  <span style="color:var(--muted);">${isOpen ? "▲" : "▼"}</span>
+                </div>
+              </div>
+              <div class="day-body">
+                <div class="day-groups">${groupsHtml}${customGroupHtml}</div>
+                <div class="note-field">
+                  <label for="${d}__note">Ghi chú ngày</label>
+                  <input type="text" id="${d}__note" value="${escapeHtml(item.note || "")}"
+                    placeholder="Ví dụ: Đóng tiền sân bóng, ăn sáng..." data-date="${d}" class="note-input" />
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        const netLabel = wNet >= 0 ? "Dư ra trong tuần (Thu - Chi)" : "Hụt / Thất thoát ròng trong tuần";
+        const netClass = wNet >= 0 ? "ok" : "warn";
+
+        const recapHtml = `
+          <div class="week-recap">
+            <div class="week-recap-title">
+              <span>Tổng kết cuối ${w.title} (${w.range})</span>
+              <span style="font-size:12px;color:var(--muted);font-weight:500;">Tính lũy kế tới hết ${w.title}</span>
+            </div>
+            <div class="week-recap-grid">
+              <div class="recap-box">
+                <div class="r-label">Thu vào trong tuần</div>
+                <div class="r-val ok">+${fmtMoney(wIncome)}</div>
+                <div class="r-sub">Tiền bố mẹ cho & khoản thu (+)</div>
+              </div>
+              <div class="recap-box">
+                <div class="r-label">Thất thoát / Đã chi trong tuần</div>
+                <div class="r-val warn">-${fmtMoney(wExpense)}</div>
+                <div class="r-sub">Tổng các khoản chi ra trong tuần</div>
+              </div>
+              <div class="recap-box">
+                <div class="r-label">${netLabel}</div>
+                <div class="r-val ${netClass}">${fmtSignedMoney(wNet)}</div>
+                <div class="r-sub">${wNet >= 0 ? "Thu lớn hơn chi trong tuần" : "Chi nhiều hơn tiền thu trong tuần"}</div>
+              </div>
+              <div class="recap-box">
+                <div class="r-label">Tiền đang có tính tới hết ${w.title}</div>
+                <div class="r-val ${moneyAtEndOfWeek < 0 ? "warn" : "gold"}">${fmtMoney(moneyAtEndOfWeek)}</div>
+                <div class="r-sub">Tiền đầu (${fmtMoney(initBal)}) + Tổng thu tới tuần - Tổng chi tới tuần</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        return `
+          <div class="week-section">
+            <div class="week-header">
+              <div>
+                <span class="week-title">${w.title}</span>
+                <span class="week-range">${w.range}</span>
+              </div>
+              <div class="week-summary">
+                <span>Thu: <strong class="ok">+${fmtMoney(wIncome)}</strong></span>
+                <span>Chi: <strong class="warn">${fmtMoney(wExpense)}</strong></span>
+                <span>Còn hạn mức tuần: <strong class="${wLeft < 0 ? "warn" : "ok"}">${fmtMoney(wLeft)}</strong> / ${fmtMoney(weeklyLimit)}</span>
+              </div>
+            </div>
+            ${daysHtml}
+            ${recapHtml}
+          </div>
+        `;
+      }).join("");
+
+      bindDynamicEvents();
+    }
+
+    window.toggleDayCard = function(dateStr) {
+      appData.state.dayExpandedMap[dateStr] = !appData.state.dayExpandedMap[dateStr];
+      persist("Đã cập nhật");
+      render();
+    };
+
+    function bindDynamicEvents() {
+      document.querySelectorAll(".amt-input").forEach(el => {
+        el.addEventListener("change", e => {
+          const d = e.target.dataset.date;
+          const k = e.target.dataset.key;
+          const val = Math.max(0, Number(e.target.value || 0));
+          appData.state.days[d][k] = val;
+          persist("Đã lưu số tiền");
+          render();
+        });
+      });
+
+      document.querySelectorAll(".custom-type").forEach(el => {
+        el.addEventListener("change", e => {
+          const d = e.target.dataset.date;
+          const cid = e.target.dataset.cid;
+          const list = normalizeCustomItems(appData.state.days[d].customItems);
+          const target = list.find(it => it.id === cid);
+          if (target) target.type = e.target.value === "income" ? "income" : "expense";
+          appData.state.days[d].customItems = list;
+          persist("Đã lưu loại khoản khác");
+          render();
+        });
+      });
+
+      document.querySelectorAll(".custom-name").forEach(el => {
+        el.addEventListener("change", e => {
+          const d = e.target.dataset.date;
+          const cid = e.target.dataset.cid;
+          const list = normalizeCustomItems(appData.state.days[d].customItems);
+          const target = list.find(it => it.id === cid);
+          if (target) target.name = e.target.value;
+          appData.state.days[d].customItems = list;
+          persist("Đã lưu tên khoản khác");
+          render();
+        });
+      });
+
+      document.querySelectorAll(".custom-amt").forEach(el => {
+        el.addEventListener("change", e => {
+          const d = e.target.dataset.date;
+          const cid = e.target.dataset.cid;
+          const list = normalizeCustomItems(appData.state.days[d].customItems);
+          const target = list.find(it => it.id === cid);
+          if (target) target.amount = Math.max(0, Number(e.target.value || 0));
+          appData.state.days[d].customItems = list;
+          persist("Đã lưu số tiền khoản khác");
+          render();
+        });
+      });
+
+      document.querySelectorAll(".note-input").forEach(el => {
+        el.addEventListener("change", e => {
+          const d = e.target.dataset.date;
+          appData.state.days[d].note = e.target.value;
+          persist("Đã lưu ghi chú");
+          render();
+        });
+      });
+    }
+
+    document.getElementById("addWeekBtn").addEventListener("click", addOneWeek);
+
+    document.getElementById("initialBalanceInput").addEventListener("change", e => {
+      appData.state.initialBalance = Math.max(0, Number(e.target.value || 0));
+      persist("Đã lưu số dư đầu");
+      render();
+    });
+
+    document.getElementById("weeklyLimitInput").addEventListener("change", e => {
+      appData.state.weeklyLimit = Math.max(0, Number(e.target.value || 0));
+      persist("Đã lưu hạn mức tuần");
+      render();
+    });
+
+    document.getElementById("exportJsonBtn").addEventListener("click", () => {
+      appData.exportedAt = new Date().toISOString();
+      persist("Đã lưu & xuất file");
+      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const dayStamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `so-chi-tieu-${dayStamp}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("importJsonInput").addEventListener("change", e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          appData = normalizeData(parsed);
+          persist("Đã nhập file JSON");
+          render();
+          alert("Đã nhập dữ liệu từ file JSON thành công!");
+        } catch (err) {
+          alert("File JSON không hợp lệ: " + err.message);
+        }
+        e.target.value = "";
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Đặt lại toàn bộ dữ liệu về file gốc ban đầu?")) {
+        appData = normalizeData(DEFAULT_DATA);
+        persist("Đã reset về gốc");
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
